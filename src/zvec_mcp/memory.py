@@ -115,7 +115,7 @@ class MemoryStore:
         Returns list of dicts: id, score, text, category, created_at.
         """
         vec = self._emb.embed(query)
-        filt = f"category == '{category}'" if category else None
+        filt = f"category = '{category}'" if category else None
         results = self.col.query(
             vectors=VectorQuery(field_name="embedding", vector=vec),
             topk=topk,
@@ -143,7 +143,7 @@ class MemoryStore:
 
     def forget_category(self, category: str) -> None:
         """Delete all memories in a category."""
-        self.col.delete_by_filter(f"category == '{category}'")
+        self.col.delete_by_filter(f"category = '{category}'")
         logger.info("Forgot all memories in category=%s", category)
 
     # ------------------------------------------------------------------

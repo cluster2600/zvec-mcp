@@ -17,13 +17,14 @@ class Config:
     ))
 
     # Embedding model
-    # "local" => sentence-transformers all-MiniLM-L6-v2 (384-dim, free, offline)
+    # "local"  => sentence-transformers all-MiniLM-L6-v2 (384-dim, free, offline)
     # "openai" => OpenAI text-embedding-3-small (1536-dim, requires API key)
+    # "http"   => any OpenAI-compatible endpoint (LM Studio, Ollama, vLLM, …)
     embedding_backend: str = field(default_factory=lambda: os.environ.get(
         "ZVEC_MCP_EMBEDDING", "local"
     ))
 
-    # OpenAI settings (only when embedding_backend == "openai")
+    # OpenAI settings (when embedding_backend == "openai")
     openai_api_key: str = field(default_factory=lambda: os.environ.get(
         "OPENAI_API_KEY", ""
     ))
@@ -32,6 +33,21 @@ class Config:
     ))
     openai_dimension: int = field(default_factory=lambda: int(os.environ.get(
         "ZVEC_MCP_OPENAI_DIM", "1536"
+    )))
+
+    # HTTP embedding settings (when embedding_backend == "http")
+    # Works with LM Studio, Ollama, vLLM, or any OpenAI-compatible /v1/embeddings
+    http_url: str = field(default_factory=lambda: os.environ.get(
+        "ZVEC_MCP_HTTP_URL", "http://127.0.0.1:1234/v1/embeddings"
+    ))
+    http_model: str = field(default_factory=lambda: os.environ.get(
+        "ZVEC_MCP_HTTP_MODEL", "text-embedding-nomic-embed-text-v1.5@f16"
+    ))
+    http_api_key: str = field(default_factory=lambda: os.environ.get(
+        "ZVEC_MCP_HTTP_API_KEY", ""
+    ))
+    http_dimension: int = field(default_factory=lambda: int(os.environ.get(
+        "ZVEC_MCP_HTTP_DIM", "768"
     )))
 
     # Chunking
@@ -50,6 +66,8 @@ class Config:
     def embedding_dim(self) -> int:
         if self.embedding_backend == "openai":
             return self.openai_dimension
+        if self.embedding_backend == "http":
+            return self.http_dimension
         return 384  # all-MiniLM-L6-v2
 
     @property

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
-from typing import TYPE_CHECKING
+import urllib.request
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -16,8 +18,27 @@ logger = logging.getLogger(__name__)
 _embedder: _Embedder | None = None
 
 
+class _HttpEmbedder:
+    """Calls any OpenAI-compatible /v1/embeddings endpoint (LM Studio, Ollama, vLLM, …)."""
+
+    def __init__(self, url: str, model: str, api_key: str = "") -> None:
+        self._url = url
+        self._model = model
+        self._api_key = api_key
+
+    def embed(self, text: str) -> list[float]:
+        payload = json.dumps({"model": self._model, "input": text}).encode()
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if self._api_key:
+            headers["Authorization"] = f"Bearer {self._api_key}"
+        req = urllib.request.Request(self._url, data=payload, headers=headers)
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body: dict[str, Any] = json.loads(resp.read())
+        return body["data"][0]["embedding"]
+
+
 class _Embedder:
-    """Thin wrapper that dispatches to zvec's embedding functions."""
+    """Thin wrapper that dispatches to the configured embedding backend."""
 
     def __init__(self, cfg: Config) -> None:
         self._cfg = cfg
@@ -27,7 +48,9 @@ class _Embedder:
         if self._fn is not None:
             return
 
-        if self._cfg.embedding_backend == "openai":
+        backend = self._cfg.embedding_backend
+
+        if backend == "openai":
             from zvec.extension import OpenAIDenseEmbedding
 
             self._fn = OpenAIDenseEmbedding(
@@ -39,6 +62,18 @@ class _Embedder:
                 "Loaded OpenAI embedding: model=%s dim=%d",
                 self._cfg.openai_model,
                 self._cfg.openai_dimension,
+            )
+        elif backend == "http":
+            self._fn = _HttpEmbedder(
+                url=self._cfg.http_url,
+                model=self._cfg.http_model,
+                api_key=self._cfg.http_api_key,
+            )
+            logger.info(
+                "Loaded HTTP embedding: url=%s model=%s dim=%d",
+                self._cfg.http_url,
+                self._cfg.http_model,
+                self._cfg.http_dimension,
             )
         else:
             from zvec.extension import DefaultLocalDenseEmbedding

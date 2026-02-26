@@ -89,12 +89,16 @@ All settings are driven by environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ZVEC_MCP_DATA_DIR` | `~/.zvec-mcp` | Root directory for zvec collections |
-| `ZVEC_MCP_EMBEDDING` | `local` | Embedding backend: `local` or `openai` |
+| `ZVEC_MCP_EMBEDDING` | `local` | Embedding backend: `local`, `openai`, or `http` |
 | `ZVEC_MCP_CHUNK_SIZE` | `512` | Characters per chunk for knowledge ingestion |
 | `ZVEC_MCP_CHUNK_OVERLAP` | `64` | Overlap between consecutive chunks |
 | `OPENAI_API_KEY` | — | Required when `ZVEC_MCP_EMBEDDING=openai` |
 | `ZVEC_MCP_OPENAI_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
 | `ZVEC_MCP_OPENAI_DIM` | `1536` | OpenAI embedding dimension |
+| `ZVEC_MCP_HTTP_URL` | `http://127.0.0.1:1234/v1/embeddings` | HTTP endpoint (for `http` backend) |
+| `ZVEC_MCP_HTTP_MODEL` | `text-embedding-nomic-embed-text-v1.5@f16` | Model name sent to the HTTP endpoint |
+| `ZVEC_MCP_HTTP_API_KEY` | — | Bearer token for the HTTP endpoint |
+| `ZVEC_MCP_HTTP_DIM` | `768` | Embedding dimension from the HTTP model |
 
 ### Embedding backends
 
@@ -105,6 +109,37 @@ All settings are driven by environment variables:
 ```bash
 ZVEC_MCP_EMBEDDING=openai
 OPENAI_API_KEY=sk-...
+```
+
+**HTTP (LM Studio / Ollama / vLLM)** — calls any OpenAI-compatible `/v1/embeddings` endpoint. No extra Python dependencies — uses `urllib` directly. Set:
+
+```bash
+ZVEC_MCP_EMBEDDING=http
+ZVEC_MCP_HTTP_URL=http://127.0.0.1:1234/v1/embeddings
+ZVEC_MCP_HTTP_MODEL=text-embedding-nomic-embed-text-v1.5@f16
+ZVEC_MCP_HTTP_API_KEY=your-api-key   # optional, depends on server
+ZVEC_MCP_HTTP_DIM=768                # must match the model's output dimension
+```
+
+Example `.mcp.json` for LM Studio with nomic-embed-text:
+
+```json
+{
+  "mcpServers": {
+    "zvec-mcp": {
+      "command": "/path/to/zvec-mcp/.venv/bin/zvec-mcp",
+      "args": [],
+      "env": {
+        "ZVEC_MCP_DATA_DIR": "${HOME}/.zvec-mcp",
+        "ZVEC_MCP_EMBEDDING": "http",
+        "ZVEC_MCP_HTTP_URL": "http://127.0.0.1:1234/v1/embeddings",
+        "ZVEC_MCP_HTTP_MODEL": "text-embedding-nomic-embed-text-v1.5@f16",
+        "ZVEC_MCP_HTTP_API_KEY": "your-lm-studio-key",
+        "ZVEC_MCP_HTTP_DIM": "768"
+      }
+    }
+  }
+}
 ```
 
 ## Architecture
@@ -131,7 +166,8 @@ OPENAI_API_KEY=sk-...
                                      │                          │
                                      │  ┌──────────┐            │
                                      │  │embeddings│ local /   │
-                                     │  │ (lazy)   │ openai    │
+                                     │  │ (lazy)   │ openai /  │
+                                     │  │          │ http      │
                                      │  └──────────┘            │
                                      └──────────────────────────┘
 ```
@@ -142,7 +178,7 @@ OPENAI_API_KEY=sk-...
 src/zvec_mcp/
 ├── server.py       # FastMCP server — 11 tools registered via @mcp.tool()
 ├── config.py       # Env-driven dataclass config
-├── embeddings.py   # Lazy-loaded embedding singleton (sentence-transformers or OpenAI)
+├── embeddings.py   # Lazy-loaded embedding singleton (sentence-transformers, OpenAI, or HTTP)
 ├── knowledge.py    # RAG pipeline: chunk → embed → upsert → query
 └── memory.py       # Semantic memory: remember → recall → forget
 ```

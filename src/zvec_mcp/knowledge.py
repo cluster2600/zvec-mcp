@@ -195,7 +195,7 @@ class KnowledgeBase:
 
     def delete_source(self, source: str) -> None:
         """Delete all chunks from a given source."""
-        self.col.delete_by_filter(f"source == '{source}'")
+        self.col.delete_by_filter(f"source = '{source}'")
         logger.info("Deleted chunks for source=%s", source)
 
     def stats(self) -> dict[str, Any]:
