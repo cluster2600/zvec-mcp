@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "zvec-mcp"
+version = "0.1.0"
+description = "Claude Code MCP server for RAG and memory powered by zvec"
+readme = {text = "Claude Code MCP server for RAG and memory powered by zvec.", content-type = "text/plain"}
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dependencies = [
+    "mcp[cli]>=1.0.0",
+    "zvec",
+    "sentence-transformers>=2.0.0",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.0.0"]
+dev = ["pytest", "pytest-asyncio"]
+
+[project.scripts]
+zvec-mcp = "zvec_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zvec_mcp"]

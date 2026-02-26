@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "zvec-mcp": {
+      "command": "/Users/maxime/.openclaw/workspace/zvec-mcp/.venv/bin/zvec-mcp",
+      "args": [],
+      "env": {
+        "ZVEC_MCP_DATA_DIR": "${HOME}/.zvec-mcp",
+        "ZVEC_MCP_EMBEDDING": "local"
+      }
+    }
+  }
+}
