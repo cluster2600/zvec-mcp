@@ -481,27 +481,26 @@ To build the desktop extension from source:
 # Install mcpb CLI
 npm install -g @anthropic-ai/mcpb
 
-# Install bundled dependencies (core only, no torch)
-pip install --target bundle/server/lib \
-  --no-deps mcp pydantic pydantic-core anyio httpx httpx-sse \
-  starlette uvicorn sniffio h11 httpcore certifi idna \
-  typing_extensions annotated-types click sse-starlette \
-  python-dotenv zvec numpy
+# Install bundled dependencies (core only, no torch/sentence-transformers)
+# IMPORTANT: let pip resolve versions — do NOT use --no-deps
+pip install --target bundle/server/lib "mcp[cli]>=1.0.0" zvec numpy
 
-# Copy source
+# Copy zvec_mcp source into the bundle
 cp -r src/zvec_mcp bundle/server/lib/zvec_mcp
 
-# Strip unnecessary files
+# Strip caches (keep .dist-info — needed for importlib.metadata)
 cd bundle/server/lib
 find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
-find . -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null
 find . -name "*.pyc" -delete 2>/dev/null
 cd ../../..
 
-# Validate and pack
+# Validate manifest and pack
 mcpb validate bundle/manifest.json
-mcpb pack bundle/ zvec-mcp.mcpb
+mcpb pack bundle/ zvec-mcp-0.1.0.mcpb
 ```
+
+> **Do not** strip `.dist-info` directories — the MCP SDK uses `importlib.metadata.version("mcp")` at import time and will fail without them.
+> **Do not** use `--no-deps` — pydantic and pydantic-core have strict version coupling and must be resolved together.
 
 ---
 
