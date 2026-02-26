@@ -1,0 +1,173 @@
+{
+  "manifest_version": "0.3",
+  "name": "zvec-mcp",
+  "display_name": "zvec RAG & Memory",
+  "version": "0.1.0",
+  "description": "Local vector database for RAG knowledge retrieval and long-term memory, powered by zvec. Supports local, OpenAI, and HTTP (LM Studio/Ollama) embeddings.",
+  "author": {
+    "name": "cluster2600",
+    "url": "https://github.com/cluster2600"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cluster2600/zvec-mcp"
+  },
+  "homepage": "https://github.com/cluster2600/zvec-mcp",
+  "license": "Apache-2.0",
+  "keywords": ["rag", "memory", "vector-database", "zvec", "embeddings", "knowledge-base"],
+  "server": {
+    "type": "python",
+    "entry_point": "server/main.py",
+    "mcp_config": {
+      "command": "python",
+      "args": [
+        "${__dirname}/server/main.py"
+      ],
+      "env": {
+        "PYTHONPATH": "${__dirname}/server/lib",
+        "ZVEC_MCP_DATA_DIR": "${user_config.data_dir}",
+        "ZVEC_MCP_EMBEDDING": "${user_config.embedding_backend}",
+        "ZVEC_MCP_CHUNK_SIZE": "${user_config.chunk_size}",
+        "ZVEC_MCP_CHUNK_OVERLAP": "${user_config.chunk_overlap}",
+        "ZVEC_MCP_HTTP_URL": "${user_config.http_url}",
+        "ZVEC_MCP_HTTP_MODEL": "${user_config.http_model}",
+        "ZVEC_MCP_HTTP_API_KEY": "${user_config.http_api_key}",
+        "ZVEC_MCP_HTTP_DIM": "${user_config.http_dim}",
+        "OPENAI_API_KEY": "${user_config.openai_api_key}",
+        "ZVEC_MCP_OPENAI_MODEL": "${user_config.openai_model}",
+        "ZVEC_MCP_OPENAI_DIM": "${user_config.openai_dim}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "knowledge_ingest",
+      "description": "Ingest text into the knowledge base for later RAG retrieval"
+    },
+    {
+      "name": "knowledge_ingest_file",
+      "description": "Read a file from disk and ingest its contents into the knowledge base"
+    },
+    {
+      "name": "knowledge_search",
+      "description": "Search the knowledge base for text relevant to a query"
+    },
+    {
+      "name": "knowledge_delete_source",
+      "description": "Delete all chunks from a specific source in the knowledge base"
+    },
+    {
+      "name": "knowledge_stats",
+      "description": "Return statistics about the knowledge base collection"
+    },
+    {
+      "name": "memory_remember",
+      "description": "Store a fact, observation, or preference in long-term memory"
+    },
+    {
+      "name": "memory_recall",
+      "description": "Recall memories that are semantically similar to a query"
+    },
+    {
+      "name": "memory_forget",
+      "description": "Delete a specific memory by its ID"
+    },
+    {
+      "name": "memory_forget_category",
+      "description": "Delete all memories in a category"
+    },
+    {
+      "name": "memory_stats",
+      "description": "Return statistics about the memory store"
+    },
+    {
+      "name": "zvec_status",
+      "description": "Return overall status of the zvec-mcp server"
+    }
+  ],
+  "user_config": {
+    "data_dir": {
+      "type": "string",
+      "title": "Data Directory",
+      "description": "Where to store the vector database collections",
+      "default": "${HOME}/.zvec-mcp",
+      "required": false
+    },
+    "embedding_backend": {
+      "type": "string",
+      "title": "Embedding Backend",
+      "description": "Choose: 'http' (LM Studio/Ollama/vLLM), 'openai', or 'local' (requires sentence-transformers installed separately)",
+      "default": "http",
+      "required": false
+    },
+    "chunk_size": {
+      "type": "string",
+      "title": "Chunk Size",
+      "description": "Characters per chunk for knowledge ingestion",
+      "default": "512",
+      "required": false
+    },
+    "chunk_overlap": {
+      "type": "string",
+      "title": "Chunk Overlap",
+      "description": "Overlap between consecutive chunks",
+      "default": "64",
+      "required": false
+    },
+    "http_url": {
+      "type": "string",
+      "title": "HTTP Embedding URL",
+      "description": "OpenAI-compatible embedding endpoint (for http backend)",
+      "default": "http://127.0.0.1:1234/v1/embeddings",
+      "required": false
+    },
+    "http_model": {
+      "type": "string",
+      "title": "HTTP Model Name",
+      "description": "Model name sent to the HTTP endpoint",
+      "default": "text-embedding-nomic-embed-text-v1.5@f16",
+      "required": false
+    },
+    "http_api_key": {
+      "type": "string",
+      "title": "HTTP API Key",
+      "description": "Bearer token for the HTTP embedding endpoint",
+      "sensitive": true,
+      "required": false
+    },
+    "http_dim": {
+      "type": "string",
+      "title": "HTTP Embedding Dimension",
+      "description": "Dimension of vectors from the HTTP model",
+      "default": "768",
+      "required": false
+    },
+    "openai_api_key": {
+      "type": "string",
+      "title": "OpenAI API Key",
+      "description": "Required when using OpenAI embedding backend",
+      "sensitive": true,
+      "required": false
+    },
+    "openai_model": {
+      "type": "string",
+      "title": "OpenAI Model",
+      "description": "OpenAI embedding model name",
+      "default": "text-embedding-3-small",
+      "required": false
+    },
+    "openai_dim": {
+      "type": "string",
+      "title": "OpenAI Embedding Dimension",
+      "description": "Dimension for OpenAI embeddings",
+      "default": "1536",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  }
+}
